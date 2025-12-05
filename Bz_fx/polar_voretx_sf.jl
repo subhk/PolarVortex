@@ -265,7 +265,7 @@ function BasicState!(diffMatrix, mf, grid, params)
 
     a₀ = 0.15 
     a₁ = 0.85
-    c  = 2.0
+    c  = 0.5 * params.L
     δ  = 0.48
     for it in 1:length(x)
         @. B₀[it,:] = a₀ + a₁ * exp(-(x[it]-c)^2/(2δ^2))
@@ -405,7 +405,7 @@ function construct_matrices(Op, mf, params)
 
     # rhs of the matrix (size := 5 × 5)
     # [uz, wz, θ, bz, jz] 
-    ℳ₁[:,2s₂+1:3s₂] = 1.0 * params.q * (Op.𝒟²ˣ - params.kₓ^2 * I⁰);
+    ℳ₁[:,2s₂+1:3s₂] = -1.0params.q * (Op.𝒟²ˣ - params.kₓ^2 * I⁰);
 
     ℳ = ([ℳ₁; ℳ₂; ℳ₃; ℳ₄; ℳ₅]);
     
@@ -421,7 +421,7 @@ Parameters:
     H::T        = 1.0          # vertical domain size
     Pr::T       = 1.0          # Prandtl number
     q::T        = 1.0          # Robert number
-    Λ::T        = 0.1          # Elsasser number
+    Λ::T        = 0.04          # Elsasser number
     kₓ::T       = 0.0          # x-wavenumber
     E::T        = 5.0e-5       # Ekman number 
     Nx::Int64   = 320          # no. of x-grid points
@@ -482,7 +482,7 @@ function EigSolver(Op, mf, params, σ::ComplexF64)
         λₛ⁻¹, V1, info = eigsolve(construct_linear_map(𝓛- σ*ℳ, ℳ), 
                                 rand(ComplexF64, size(𝓛,1)), 
                                 10, :LM, 
-                                maxiter=50, krylovdim=300, verbosity=1)
+                                maxiter=150, krylovdim=300, verbosity=1)
 
         λₛ⁰ = @. 1.0 / λₛ⁻¹ + σ
         Χ = zeros(ComplexF64, size(𝓛, 1), 1);
