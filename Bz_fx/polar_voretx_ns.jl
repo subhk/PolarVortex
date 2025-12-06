@@ -88,11 +88,12 @@ end
 
     𝒟ᶻᴺ::Array{Float64,  2}    = SparseMatrixCSC(Zeros(N, N))
     𝒟²ᶻᴺ::Array{Float64, 2}    = SparseMatrixCSC(Zeros(N, N))
+    𝒟³ᶻᴺ::Array{Float64, 2}    = SparseMatrixCSC(Zeros(N, N))
     𝒟⁴ᶻᴺ::Array{Float64, 2}    = SparseMatrixCSC(Zeros(N, N))
 
     𝒟ᶻᴰ::Array{Float64,  2}    = SparseMatrixCSC(Zeros(N, N))
     𝒟²ᶻᴰ::Array{Float64, 2}    = SparseMatrixCSC(Zeros(N, N))
-    𝒟⁴ᶻᴰ::Array{Float64, 2}    = SparseMatrixCSC(Zeros(N, N))
+    𝒟³ᶻᴰ::Array{Float64, 2}    = SparseMatrixCSC(Zeros(N, N))
 
     𝒟ˣᶻᴰ::Array{Float64,  2}   = SparseMatrixCSC(Zeros(N, N))
     𝒟ˣᶻᴺ::Array{Float64,  2}   = SparseMatrixCSC(Zeros(N, N))
@@ -106,7 +107,7 @@ end
     𝒟³ˣᶻᴺ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(N, N)) 
     𝒟ˣ³ᶻᴺ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(N, N))
 
-    𝒟²ˣ²ᶻᴰ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(N, N))
+    𝒟²ˣ²ᶻᴺ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(N, N))
 end
 
 @with_kw mutable struct MeanFlow{N} 
@@ -196,6 +197,8 @@ function ImplementBCs_cheb!(Op, diffMatrix, params)
     @. diffMatrix.𝒟²ᶻᴰ = diffMatrix.𝒟²ᶻ
     @. diffMatrix.𝒟³ᶻᴰ = diffMatrix.𝒟³ᶻ
 
+    n = params.Nz
+
     diffMatrix.𝒟ᶻᴰ[1,1]  = 0.0
     diffMatrix.𝒟ᶻᴰ[n,n]  = 0.0
 
@@ -212,11 +215,11 @@ function ImplementBCs_cheb!(Op, diffMatrix, params)
     @. diffMatrix.𝒟⁴ᶻᴺ = diffMatrix.𝒟⁴ᶻ
 
     for iter ∈ 1:n-1
-        diffMatrix.𝒟⁴ᶻᴺ[1,iter+1] = (diffMatrix.𝒟⁴ᶻᴺ[1,iter+1] + 
-                                -1.0 * diffMatrix.𝒟⁴ᶻᴺ[1,1] * diffMatrix.𝒟ᶻᴺ[1,iter+1]/diffMatrix.𝒟ᶻᴺ[1,1])
+        diffMatrix.𝒟²ᶻᴺ[1,iter+1] = (diffMatrix.𝒟²ᶻᴺ[1,iter+1] + 
+                                -1.0 * diffMatrix.𝒟²ᶻᴺ[1,1] * diffMatrix.𝒟ᶻᴺ[1,iter+1]/diffMatrix.𝒟ᶻᴺ[1,1])
 
-        diffMatrix.𝒟⁴ᶻᴺ[n,iter]   = (diffMatrix.𝒟⁴ᶻᴺ[n,iter] + 
-                                -1.0 * diffMatrix.𝒟⁴ᶻᴺ[n,n] * diffMatrix.𝒟ᶻᴺ[n,iter]/diffMatrix.𝒟ᶻᴺ[n,n])
+        diffMatrix.𝒟²ᶻᴺ[n,iter]   = (diffMatrix.𝒟²ᶻᴺ[n,iter] + 
+                                -1.0 * diffMatrix.𝒟²ᶻᴺ[n,n] * diffMatrix.𝒟ᶻᴺ[n,iter]/diffMatrix.𝒟ᶻᴺ[n,n])
     end
 
     for iter ∈ 1:n-1
@@ -228,25 +231,28 @@ function ImplementBCs_cheb!(Op, diffMatrix, params)
     end
 
     for iter ∈ 1:n-1
-        diffMatrix.𝒟²ᶻᴺ[1,iter+1] = (diffMatrix.𝒟²ᶻᴺ[1,iter+1] + 
-                                -1.0 * diffMatrix.𝒟²ᶻᴺ[1,1] * diffMatrix.𝒟ᶻᴺ[1,iter+1]/diffMatrix.𝒟ᶻᴺ[1,1])
+        diffMatrix.𝒟⁴ᶻᴺ[1,iter+1] = (diffMatrix.𝒟⁴ᶻᴺ[1,iter+1] + 
+                                -1.0 * diffMatrix.𝒟⁴ᶻᴺ[1,1] * diffMatrix.𝒟ᶻᴺ[1,iter+1]/diffMatrix.𝒟ᶻᴺ[1,1])
 
-        diffMatrix.𝒟²ᶻᴺ[n,iter]   = (diffMatrix.𝒟²ᶻᴺ[n,iter] + 
-                                -1.0 * diffMatrix.𝒟²ᶻᴺ[n,n] * diffMatrix.𝒟ᶻᴺ[n,iter]/diffMatrix.𝒟ᶻᴺ[n,n])
+        diffMatrix.𝒟⁴ᶻᴺ[n,iter]   = (diffMatrix.𝒟⁴ᶻᴺ[n,iter] + 
+                                -1.0 * diffMatrix.𝒟⁴ᶻᴺ[n,n] * diffMatrix.𝒟ᶻᴺ[n,iter]/diffMatrix.𝒟ᶻᴺ[n,n])
     end
 
-    diffMatrix.𝒟³ᶻᴺ[1,1] = 0.0
-    diffMatrix.𝒟³ᶻᴺ[n,n] = 0.0
+    @. diffMatrix.𝒟ᶻᴺ[1,1:end] = 0.0
+    @. diffMatrix.𝒟ᶻᴺ[n,1:end] = 0.0
 
     diffMatrix.𝒟²ᶻᴺ[1,1] = 0.0
     diffMatrix.𝒟²ᶻᴺ[n,n] = 0.0
 
-    @. diffMatrix.𝒟ᶻᴺ[1,1:end] = 0.0
-    @. diffMatrix.𝒟ᶻᴺ[n,1:end] = 0.0
-    
+    diffMatrix.𝒟³ᶻᴺ[1,1] = 0.0
+    diffMatrix.𝒟³ᶻᴺ[n,n] = 0.0
+
+    diffMatrix.𝒟⁴ᶻᴺ[1,2]   = 0.0
+    diffMatrix.𝒟⁴ᶻᴺ[n,n-1] = 0.0
+
     kron!( Op.𝒟ᶻᴰ  ,  Iˣ , diffMatrix.𝒟ᶻᴰ  )
     kron!( Op.𝒟²ᶻᴰ ,  Iˣ , diffMatrix.𝒟²ᶻᴰ )
-    kron!( Op.𝒟⁴ᶻᴰ ,  Iˣ , diffMatrix.𝒟⁴ᶻᴰ )
+    kron!( Op.𝒟³ᶻᴰ ,  Iˣ , diffMatrix.𝒟³ᶻᴰ )
 
     kron!( Op.𝒟ᶻᴺ  ,  Iˣ , diffMatrix.𝒟ᶻᴺ )
     kron!( Op.𝒟²ᶻᴺ ,  Iˣ , diffMatrix.𝒟²ᶻᴺ)
@@ -263,7 +269,7 @@ function ImplementBCs_cheb!(Op, diffMatrix, params)
     kron!( Op.𝒟²ˣᶻᴰ  ,  diffMatrix.𝒟²ˣ ,  diffMatrix.𝒟ᶻᴰ  )
     kron!( Op.𝒟³ˣᶻᴰ  ,  diffMatrix.𝒟³ˣ ,  diffMatrix.𝒟ᶻᴰ  )
 
-    kron!( Op.𝒟²ˣ²ᶻᴰ ,  diffMatrix.𝒟²ˣ ,  diffMatrix.𝒟²ᶻᴰ )
+    kron!( Op.𝒟²ˣ²ᶻᴺ ,  diffMatrix.𝒟²ˣ ,  diffMatrix.𝒟²ᶻᴺ )
     kron!( Op.𝒟ˣ³ᶻᴰ  ,  diffMatrix.𝒟ˣ  ,  diffMatrix.𝒟³ᶻᴰ )
 
     return nothing
@@ -359,20 +365,20 @@ function construct_matrices(Op, mf, params)
     @assert norm(∇ₕ² * H - I⁰) ≤ 1.0e-6 "difference in L2-norm should be small"
     @printf "||∇ₕ² * (∇ₕ²)⁻¹ - I||₂ =  %f \n" norm(∇ₕ² * H - I⁰) 
 
-    D⁴  = (1.0 * Op.𝒟⁴ˣ 
-        + 1.0 * Op.𝒟⁴ᶻᴰ 
+    Dₙ⁴  = (1.0 * Op.𝒟⁴ˣ 
+        + 1.0 * Op.𝒟⁴ᶻᴺ 
         + 1.0params.kₓ^4 * I⁰ 
         - 2.0params.kₓ^2 * Op.𝒟²ˣ 
-        - 2.0 * params.kₓ^2 * Op.𝒟²ᶻᴰ
-        + 2.0 * Op.𝒟²ˣ²ᶻᴰ)
+        - 2.0 * params.kₓ^2 * Op.𝒟²ᶻᴺ
+        + 2.0 * Op.𝒟²ˣ²ᶻᴺ)
         
     D²  = (1.0 * Op.𝒟²ᶻᴰ + 1.0 * ∇ₕ²)
     Dₙ² = (1.0 * Op.𝒟²ᶻᴺ + 1.0 * ∇ₕ²)
 
     #* 1. uᶻ equation (no-slip bcs: w = ∂ᶻw = 0 @ z = 0, 1)
-    𝓛₁[:,    1:1s₂] = 1.0params.E * D⁴
+    𝓛₁[:,    1:1s₂] = 1.0params.E * Dₙ⁴
 
-    𝓛₁[:,1s₂+1:2s₂] = -1.0 * Op.𝒟ᶻᴺ 
+    𝓛₁[:,1s₂+1:2s₂] = -1.0 * Op.𝒟ᶻᴰ 
                     
     𝓛₁[:,3s₂+1:4s₂] = 1.0params.Λ * mf.B₀ * D² * Op.𝒟ᶻᴰ 
                     + 1.0params.Λ * mf.∇ˣˣB₀ * Op.𝒟ᶻᴰ
@@ -390,8 +396,8 @@ function construct_matrices(Op, mf, params)
                     + 1.0im * params.Λ * params.kₓ * mf.∇ˣB₀ * H * Op.𝒟²ᶻᴺ
 
     #* 2. ωᶻ equation (no-slip bcs: ζ = 0 @ z = 0, 1)
-    𝓛₂[:,    1:1s₂] = 1.0 * Op.𝒟ᶻᴰ 
-    𝓛₂[:,1s₂+1:2s₂] = 1.0params.E * Dₙ²
+    𝓛₂[:,    1:1s₂] = 1.0 * Op.𝒟ᶻᴺ 
+    𝓛₂[:,1s₂+1:2s₂] = 1.0params.E * D²
     𝓛₂[:,3s₂+1:4s₂] = -1.0im * params.kₓ * params.Λ * mf.∇ˣB₀ * H * Op.𝒟²ᶻᴰ     
     𝓛₂[:,4s₂+1:5s₂] = (1.0params.Λ * mf.B₀ * Op.𝒟ᶻᴺ 
                     + 1.0params.Λ * mf.∇ˣB₀ * H * Op.𝒟ˣᶻᴺ)
@@ -401,15 +407,15 @@ function construct_matrices(Op, mf, params)
     𝓛₃[:,2s₂+1:3s₂] = 1.0params.q * D² 
 
     #* 4. bᶻ equation (conducting wall: bcs: bᶻ = 0 @ z = 0, 1)
-    𝓛₄[:,    1:1s₂] = (1.0 * mf.B₀ * Op.𝒟ᶻᴰ 
-                    + 1.0 * mf.∇ˣB₀ * H * Op.𝒟ˣᶻᴰ)   
+    𝓛₄[:,    1:1s₂] = (1.0 * mf.B₀ * Op.𝒟ᶻᴺ 
+                    + 1.0 * mf.∇ˣB₀ * H * Op.𝒟ˣᶻᴺ)   
     𝓛₄[:,1s₂+1:2s₂] = 1.0im * params.kₓ * mf.∇ˣB₀ * H * I⁰
     𝓛₄[:,3s₂+1:4s₂] = 1.0 * D² 
 
     #* 5. jᶻ equation (conducting wall: bcs: ∂ᶻjᶻ = 0 @ z = 0, 1)
-    𝓛₅[:,    1:1s₂] = -1.0im * params.kₓ * mf.∇ˣB₀ * H * Op.𝒟²ᶻᴰ
-    𝓛₅[:,1s₂+1:2s₂] = (1.0 * mf.B₀ * Op.𝒟ᶻᴺ
-                    + 1.0 * mf.∇ˣB₀ * H * Op.𝒟ˣᶻᴺ)
+    𝓛₅[:,    1:1s₂] = -1.0im * params.kₓ * mf.∇ˣB₀ * H * Op.𝒟²ᶻᴺ
+    𝓛₅[:,1s₂+1:2s₂] = (1.0 * mf.B₀ * Op.𝒟ᶻᴰ
+                    + 1.0 * mf.∇ˣB₀ * H * Op.𝒟ˣᶻᴰ)
     𝓛₅[:,4s₂+1:5s₂] = 1.0 * Dₙ² 
 
     𝓛 = ([𝓛₁; 𝓛₂; 𝓛₃; 𝓛₄; 𝓛₅]);
@@ -437,8 +443,8 @@ Parameters:
     Λ::T        = 0.04          # Elsasser number
     kₓ::T       = 0.0          # x-wavenumber
     E::T        = 5.0e-5       # Ekman number 
-    Nx::Int64   = 320          # no. of x-grid points
-    Nz::Int64   = 20           # no. of z-grid points
+    Nx::Int64   = 120          # no. of x-grid points
+    Nz::Int64   = 24           # no. of z-grid points
     z_discret::String = "cheb"   # option: "cheb", "fdm"
     #method::String    = "feast"
     #method::String    = "shift_invert"
@@ -567,7 +573,7 @@ function solve_PolarVortex()
 
     #kₓ = range(0.01, stop=40.0, length=400)
 
-    kₓ = 35.1
+    kₓ = 76.1
     for it in 1:1 #length(kₓ)
         params.kₓ = kₓ #[it]  
         
