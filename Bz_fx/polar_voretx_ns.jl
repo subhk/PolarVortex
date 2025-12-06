@@ -63,12 +63,12 @@ end
 
     𝒟ᶻᴺ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(Nz, Nz))
     𝒟²ᶻᴺ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(Nz, Nz))
+    𝒟³ᶻᴺ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(Nz, Nz))
     𝒟⁴ᶻᴺ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(Nz, Nz))
 
     𝒟ᶻᴰ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(Nz, Nz))
     𝒟²ᶻᴰ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(Nz, Nz))
     𝒟³ᶻᴰ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(Nz, Nz))
-    𝒟⁴ᶻᴰ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(Nz, Nz))
 end
 
 @with_kw mutable struct Operator{N}
@@ -99,8 +99,12 @@ end
 
     𝒟ˣ²ᶻᴰ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(N, N))
     𝒟²ˣᶻᴰ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(N, N))
+
     𝒟³ˣᶻᴰ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(N, N)) 
     𝒟ˣ³ᶻᴰ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(N, N))
+
+    𝒟³ˣᶻᴺ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(N, N)) 
+    𝒟ˣ³ᶻᴺ::Array{Float64,  2}  = SparseMatrixCSC(Zeros(N, N))
 
     𝒟²ˣ²ᶻᴰ::Array{Float64, 2}  = SparseMatrixCSC(Zeros(N, N))
 end
@@ -191,16 +195,6 @@ function ImplementBCs_cheb!(Op, diffMatrix, params)
     @. diffMatrix.𝒟ᶻᴰ  = diffMatrix.𝒟ᶻ 
     @. diffMatrix.𝒟²ᶻᴰ = diffMatrix.𝒟²ᶻ
     @. diffMatrix.𝒟³ᶻᴰ = diffMatrix.𝒟³ᶻ
-    @. diffMatrix.𝒟⁴ᶻᴰ = diffMatrix.𝒟⁴ᶻ
-
-    n = params.Nz
-    for iter ∈ 1:n-1
-        diffMatrix.𝒟⁴ᶻᴰ[1,iter+1] = (diffMatrix.𝒟⁴ᶻᴰ[1,iter+1] + 
-                                -1.0 * diffMatrix.𝒟⁴ᶻᴰ[1,1] * diffMatrix.𝒟²ᶻᴰ[1,iter+1])
-
-          diffMatrix.𝒟⁴ᶻᴰ[n,iter] = (diffMatrix.𝒟⁴ᶻᴰ[n,iter] + 
-                                -1.0 * diffMatrix.𝒟⁴ᶻᴰ[n,n] * diffMatrix.𝒟²ᶻᴰ[n,iter])
-    end
 
     diffMatrix.𝒟ᶻᴰ[1,1]  = 0.0
     diffMatrix.𝒟ᶻᴰ[n,n]  = 0.0
@@ -209,14 +203,29 @@ function ImplementBCs_cheb!(Op, diffMatrix, params)
     diffMatrix.𝒟²ᶻᴰ[n,n] = 0.0   
 
     diffMatrix.𝒟³ᶻᴰ[1,1] = 0.0
-    diffMatrix.𝒟³ᶻᴰ[n,n] = 0.0   
-
-    diffMatrix.𝒟⁴ᶻᴰ[1,1] = 0.0
-    diffMatrix.𝒟⁴ᶻᴰ[n,n] = 0.0  
+    diffMatrix.𝒟³ᶻᴰ[n,n] = 0.0    
 
     #* Neumann boundary condition
     @. diffMatrix.𝒟ᶻᴺ  = diffMatrix.𝒟ᶻ 
     @. diffMatrix.𝒟²ᶻᴺ = diffMatrix.𝒟²ᶻ
+    @. diffMatrix.𝒟³ᶻᴺ = diffMatrix.𝒟³ᶻ
+    @. diffMatrix.𝒟⁴ᶻᴺ = diffMatrix.𝒟⁴ᶻ
+
+    for iter ∈ 1:n-1
+        diffMatrix.𝒟⁴ᶻᴺ[1,iter+1] = (diffMatrix.𝒟⁴ᶻᴺ[1,iter+1] + 
+                                -1.0 * diffMatrix.𝒟⁴ᶻᴺ[1,1] * diffMatrix.𝒟ᶻᴺ[1,iter+1]/diffMatrix.𝒟ᶻᴺ[1,1])
+
+        diffMatrix.𝒟⁴ᶻᴺ[n,iter]   = (diffMatrix.𝒟⁴ᶻᴺ[n,iter] + 
+                                -1.0 * diffMatrix.𝒟⁴ᶻᴺ[n,n] * diffMatrix.𝒟ᶻᴺ[n,iter]/diffMatrix.𝒟ᶻᴺ[n,n])
+    end
+
+    for iter ∈ 1:n-1
+        diffMatrix.𝒟³ᶻᴺ[1,iter+1] = (diffMatrix.𝒟³ᶻᴺ[1,iter+1] + 
+                                -1.0 * diffMatrix.𝒟³ᶻᴺ[1,1] * diffMatrix.𝒟ᶻᴺ[1,iter+1]/diffMatrix.𝒟ᶻᴺ[1,1])
+
+        diffMatrix.𝒟³ᶻᴺ[n,iter]   = (diffMatrix.𝒟³ᶻᴺ[n,iter] + 
+                                -1.0 * diffMatrix.𝒟³ᶻᴺ[n,n] * diffMatrix.𝒟ᶻᴺ[n,iter]/diffMatrix.𝒟ᶻᴺ[n,n])
+    end
 
     for iter ∈ 1:n-1
         diffMatrix.𝒟²ᶻᴺ[1,iter+1] = (diffMatrix.𝒟²ᶻᴺ[1,iter+1] + 
@@ -225,6 +234,9 @@ function ImplementBCs_cheb!(Op, diffMatrix, params)
         diffMatrix.𝒟²ᶻᴺ[n,iter]   = (diffMatrix.𝒟²ᶻᴺ[n,iter] + 
                                 -1.0 * diffMatrix.𝒟²ᶻᴺ[n,n] * diffMatrix.𝒟ᶻᴺ[n,iter]/diffMatrix.𝒟ᶻᴺ[n,n])
     end
+
+    diffMatrix.𝒟³ᶻᴺ[1,1] = 0.0
+    diffMatrix.𝒟³ᶻᴺ[n,n] = 0.0
 
     diffMatrix.𝒟²ᶻᴺ[1,1] = 0.0
     diffMatrix.𝒟²ᶻᴺ[n,n] = 0.0
@@ -238,6 +250,7 @@ function ImplementBCs_cheb!(Op, diffMatrix, params)
 
     kron!( Op.𝒟ᶻᴺ  ,  Iˣ , diffMatrix.𝒟ᶻᴺ )
     kron!( Op.𝒟²ᶻᴺ ,  Iˣ , diffMatrix.𝒟²ᶻᴺ)
+    kron!( Op.𝒟³ᶻᴺ ,  Iˣ , diffMatrix.𝒟³ᶻᴺ)
 
     kron!( Op.𝒟ˣ   ,  diffMatrix.𝒟ˣ  ,  Iᶻ ) 
     kron!( Op.𝒟²ˣ  ,  diffMatrix.𝒟²ˣ ,  Iᶻ )
@@ -356,7 +369,7 @@ function construct_matrices(Op, mf, params)
     D²  = (1.0 * Op.𝒟²ᶻᴰ + 1.0 * ∇ₕ²)
     Dₙ² = (1.0 * Op.𝒟²ᶻᴺ + 1.0 * ∇ₕ²)
 
-    #* 1. uᶻ equation (bcs: w = ∂ᶻᶻw = 0 @ z = 0, 1)
+    #* 1. uᶻ equation (no-slip bcs: w = ∂ᶻw = 0 @ z = 0, 1)
     𝓛₁[:,    1:1s₂] = 1.0params.E * D⁴
 
     𝓛₁[:,1s₂+1:2s₂] = -1.0 * Op.𝒟ᶻᴺ 
@@ -376,7 +389,7 @@ function construct_matrices(Op, mf, params)
                     + 1.0im * params.Λ * params.kₓ^3 * mf.∇ˣB₀ * H * I⁰
                     + 1.0im * params.Λ * params.kₓ * mf.∇ˣB₀ * H * Op.𝒟²ᶻᴺ
 
-    #* 2. ωᶻ equation (bcs: ∂ᶻζ = 0 @ z = 0, 1)
+    #* 2. ωᶻ equation (no-slip bcs: ζ = 0 @ z = 0, 1)
     𝓛₂[:,    1:1s₂] = 1.0 * Op.𝒟ᶻᴰ 
     𝓛₂[:,1s₂+1:2s₂] = 1.0params.E * Dₙ²
     𝓛₂[:,3s₂+1:4s₂] = -1.0im * params.kₓ * params.Λ * mf.∇ˣB₀ * H * Op.𝒟²ᶻᴰ     
@@ -424,7 +437,7 @@ Parameters:
     Λ::T        = 0.04          # Elsasser number
     kₓ::T       = 0.0          # x-wavenumber
     E::T        = 5.0e-5       # Ekman number 
-    Nx::Int64   = 120          # no. of x-grid points
+    Nx::Int64   = 320          # no. of x-grid points
     Nz::Int64   = 20           # no. of z-grid points
     z_discret::String = "cheb"   # option: "cheb", "fdm"
     #method::String    = "feast"
@@ -481,19 +494,18 @@ function EigSolver(Op, mf, params, σ::ComplexF64)
 
         λₛ⁻¹, V1, info = eigsolve(construct_linear_map(𝓛- σ*ℳ, ℳ), 
                                 rand(ComplexF64, size(𝓛,1)), 
-                                20, :LM, 
-                                maxiter=150, krylovdim=400, verbosity=1)
+                                10, :LM, 
+                                maxiter=150, krylovdim=300, verbosity=1)
 
-        λₛ = @. 1.0 / λₛ⁻¹ + σ
-        
-        #Χ = zeros(ComplexF64, size(𝓛, 1), 1);
+        λₛ⁰ = @. 1.0 / λₛ⁻¹ + σ
+        Χ = zeros(ComplexF64, size(𝓛, 1), 1);
 
-        #idx = nearestval_idx(real(λₛ⁰), maximum(real(λₛ⁰)));
+        idx = nearestval_idx(real(λₛ⁰), maximum(real(λₛ⁰)));
 
-        #Χ  = deepcopy(V1)
-        #λₛ = λₛ⁰[idx]
+        Χ  = deepcopy(V1[idx])
+        λₛ = λₛ⁰[idx]
 
-        print_evals(λₛ, length(λₛ))
+        print_evals(λₛ⁰, length(λₛ⁰))
 
     else
         error("Invalid eigensolver method!")
@@ -504,9 +516,9 @@ function EigSolver(Op, mf, params, σ::ComplexF64)
     # Post Process egenvalues
     #λₛ, Χ = remove_evals(λₛ, Χ, 0.0, 10.0, "M") # `R`: real part of λₛ.
 
-    # if length(λₛ) ≥ 2 
-    #     λₛ, Χ = sort_evals(λₛ, Χ, "R", "lm") 
-    # end  
+    if length(λₛ) ≥ 2 
+        λₛ, Χ = sort_evals(λₛ, Χ, "R") 
+    end  
     
     #λₛ = sort_evals_(λₛ, "R")
 
@@ -519,16 +531,16 @@ function EigSolver(Op, mf, params, σ::ComplexF64)
     #     λₛ, Χ = remove_spurious(λₛ, Χ)
     # end
    
-    #@printf "norm: %f \n" norm(𝓛 * Χ[:,1] - λₛ[1] * ℳ * Χ[:,1])
+    @printf "norm: %f \n" norm(𝓛 * Χ[:,1] - λₛ[1] * ℳ * Χ[:,1])
     
     #print_evals(λₛ, length(λₛ))
-    @printf "critical Ra : %1.4e \n" real(λₛ[1]) 
+    @printf "largest growth rate : %1.4e%+1.4eim\n" real(λₛ[1]) imag(λₛ[1])
 
     𝓛 = nothing
     ℳ = nothing
 
     #return nothing #
-    return real(λₛ[1]) #, Χ[:,1]
+    return λₛ[1], Χ[:,1]
 end
 
 
@@ -553,23 +565,22 @@ function solve_PolarVortex()
     @printf "min/max of y: %f %f \n" minimum(grid.x) maximum(grid.x)
     @printf "no of y and z grid points: %i %i \n" params.Nx params.Nz
 
-    kₓ = range(0.01, stop=40.0, length=600)
-    λₛ = zeros(Float64, length(kₓ))
+    #kₓ = range(0.01, stop=40.0, length=400)
 
-    #kₓ = 35.1
-    for it in 1:length(kₓ)
-        params.kₓ = kₓ[it]  
+    kₓ = 35.1
+    for it in 1:1 #length(kₓ)
+        params.kₓ = kₓ #[it]  
         
-        @time λₛ[it] = EigSolver(Op, mf, params, 0.0+0.0im)
+        @time λₛ, Χ = EigSolver(Op, mf, params, 0.0+0.0im)
             
         println("==================================================================")
     end
 
-    Λ  = params.Λ
-    Nx::Int = params.Nx
-    Nz::Int = params.Nz 
-    filename = "benchmark/eigenvals"  * "_elssaer" * string(Λ) * "_" * string(Nz) * string(Nx) * ".jld2"
-    jldsave(filename; kₓ=kₓ, λₛ=λₛ)
+    # Λ  = params.Λ
+    # Nx::Int = params.Nx
+    # Nz::Int = params.Nz 
+    # filename = "benchmark/eigenvals"  * "_elssaer" * string(Λ) * "_" * string(Nz) * string(Nx) * ".jld2"
+    # jldsave(filename; kₓ=kₓ, λₛ=λₛ)
 end
 
 solve_PolarVortex()
